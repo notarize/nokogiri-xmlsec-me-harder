@@ -8,8 +8,8 @@ class Nokogiri::XML::Document
     self
   end
 
-  def sign_michael opts
-    root.sign_michael opts
+  def sign_michael! opts
+    root.sign_michael! opts
     self
   end
 
