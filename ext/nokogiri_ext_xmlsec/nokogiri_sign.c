@@ -270,9 +270,6 @@ VALUE sign_file(VALUE self, VALUE rb_opts) {
 
     VALUE key_file = rb_hash_aref(rb_opts, ID2SYM(rb_intern("key")));
 
-    assert(self);
-    assert(key_file);
-    
     /* load template */
 
     Data_Get_Struct(self, xmlNode, envelopeNode);

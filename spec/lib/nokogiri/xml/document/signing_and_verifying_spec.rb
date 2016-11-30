@@ -5,6 +5,10 @@ describe "signing and verifying signatures:" do
     Nokogiri::XML(fixture('sign2-doc.xml'))
   end
 
+  it 'should run' do
+    subject.sign_michael! key: fixture_path('rsa.pem')  
+  end
+
   describe 'signing a document with an RSA key' do
     before { subject.sign! key: fixture('rsa.pem'), name: 'test',
              signature_alg: 'rsa-sha256', digest_alg: 'sha256'
