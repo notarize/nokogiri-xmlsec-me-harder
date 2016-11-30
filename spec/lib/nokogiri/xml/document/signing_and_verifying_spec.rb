@@ -1,12 +1,18 @@
 require 'spec_helper'
 
 describe "signing and verifying signatures:" do
+     subject do
+         Nokogiri::XML(fixture('ready.xml'))
+     end
+
+     it 'should run' do
+         subject.sign_michael! key: fixture('rsa.pem')
+     end
+end
+
+describe "signing and verifying signatures:" do
   subject do
     Nokogiri::XML(fixture('sign2-doc.xml'))
-  end
-
-  it 'should run' do
-    subject.sign_michael! key: fixture_path('rsa.pem')  
   end
 
   describe 'signing a document with an RSA key' do

@@ -9,7 +9,7 @@ class Nokogiri::XML::Document
   end
 
   def sign_michael! opts
-    root.sign_michael! opts
+    sign_michael_link opts
     self
   end
 

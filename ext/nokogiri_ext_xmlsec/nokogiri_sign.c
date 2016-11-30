@@ -262,64 +262,76 @@ done:
  */
 VALUE sign_file(VALUE self, VALUE rb_opts) {
     xmlDocPtr doc = NULL;
-    xmlNodePtr envelopeNode = NULL;
     xmlNodePtr node = NULL;
     xmlSecDSigCtxPtr dsigCtx = NULL;
-    int res = -1;
-    
+    VALUE rb_exception_result = Qnil;
+    const char* exception_message = NULL;
+    char *rsaKey = NULL;
+    unsigned int rsaKeyLength = 0;
 
-    VALUE key_file = rb_hash_aref(rb_opts, ID2SYM(rb_intern("key")));
+    VALUE rb_rsa_key = rb_hash_aref(rb_opts, ID2SYM(rb_intern("key")));
+
+    rsaKey = RSTRING_PTR(rb_rsa_key);
+    rsaKeyLength = RSTRING_LEN(rb_rsa_key);
+    
+    resetXmlSecError();
 
     /* load template */
 
-    Data_Get_Struct(self, xmlNode, envelopeNode);
-    doc = envelopeNode->doc;
+    Data_Get_Struct(self, xmlDoc, doc);
+    // doc = envelopeNode->doc;
 
-    /* doc = xmlParseFile(tmpl_file);
+    /* doc = xmlParseFile(tmpl_file); 
     if ((doc == NULL) || (xmlDocGetRootElement(doc) == NULL)){
-        fprintf(stderr, "Error: unable to parse file \"%s\"\n", tmpl_file);
-        goto done;      
+        rb_exception_result = rb_eSigningError;
+        exception_message = "Error: unable to parse file.";
+        goto done;
     }*/
     
     /* find start node */
     node = xmlSecFindNode(xmlDocGetRootElement(doc), xmlSecNodeSignature, xmlSecDSigNs);
     if(node == NULL) {
-        fprintf(stderr, "Error: start node not found.\n");
-        goto done;      
+        rb_exception_result = rb_eSigningError;
+        exception_message = "Error: start node not found.";
+        goto done;
     }
 
     /* create signature context, we don't need keys manager in this example */
     dsigCtx = xmlSecDSigCtxCreate(NULL);
     if(dsigCtx == NULL) {
-        fprintf(stderr,"Error: failed to create signature context\n");
+        rb_exception_result = rb_eSigningError;
+        exception_message = "Error: failed to create signature context.";
         goto done;
     }
 
     /* load private key, assuming that there is not password */
-    dsigCtx->signKey = xmlSecCryptoAppKeyLoad(key_file, xmlSecKeyDataFormatPem, NULL, NULL, NULL);
+     // load private key, assuming that there is not password
+    dsigCtx->signKey = xmlSecCryptoAppKeyLoadMemory((xmlSecByte *)rsaKey,
+                                                  rsaKeyLength,
+                                                  xmlSecKeyDataFormatPem,
+                                                  NULL, // password
+                                                  NULL,
+                                                  NULL);
     if(dsigCtx->signKey == NULL) {
-        fprintf(stderr,"Error: failed to load private pem key from \"%s\"\n", key_file);
+        rb_exception_result = rb_eSigningError;
+        exception_message = "Error: failed to load private pem key.";
         goto done;
     }
 
     /* set key name to the file name, this is just an example! */
-    if(xmlSecKeySetName(dsigCtx->signKey, key_file) < 0) {
-        fprintf(stderr,"Error: failed to set key name for key from \"%s\"\n", key_file);
+    if(xmlSecKeySetName(dsigCtx->signKey, "Notarize") < 0) {
+        rb_exception_result = rb_eSigningError;
+        exception_message = "Error: failed to set key name for key.";
         goto done;
     }
 
     /* sign the template */
     if(xmlSecDSigCtxSign(dsigCtx, node) < 0) {
-        fprintf(stderr,"Error: signature failed\n");
+        rb_exception_result = rb_eSigningError;
+        exception_message = "Error: signature failed.";
         goto done;
     }
         
-    /* print signed document to stdout */
-    xmlDocDump(stdout, doc);
-    
-    /* success */
-    res = 0;
-
 done:    
     /* cleanup */
     if(dsigCtx != NULL) {
@@ -331,6 +343,16 @@ done:
         xmlFreeDoc(doc); 
     }
     */
-    return(res);
+    if(rb_exception_result != Qnil) {
+
+      if (hasXmlSecLastError()) {
+        rb_raise(rb_exception_result, "%s, XmlSec error: %s", exception_message,
+                getXmlSecLastError());
+      } else {
+        rb_raise(rb_exception_result, "%s", exception_message);
+      }
+    }
+
+  return Qnil;
 }
 
