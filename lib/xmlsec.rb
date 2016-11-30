@@ -8,6 +8,11 @@ class Nokogiri::XML::Document
     self
   end
 
+  def sign_michael opts
+    root.sign_michael opts
+    self
+  end
+
   # Verifies the signature on the current document.
   #
   # Returns `true` if the signature is valid, `false` otherwise.

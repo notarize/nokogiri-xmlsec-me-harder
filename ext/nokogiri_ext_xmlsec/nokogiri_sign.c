@@ -250,3 +250,90 @@ done:
 
   return Qnil;
 }
+
+/** 
+ * sign_file:
+ * @xml_file:          the signature template file name.
+ * @key_file:           the PEM private key file name.
+ *
+ * Signs the #tmpl_file using private key from #key_file.
+ *
+ * Returns 0 on success or a negative value if an error occurs.
+ */
+VALUE sign_file(VALUE self, VALUE rb_opts) {
+    xmlDocPtr doc = NULL;
+    xmlNodePtr envelopeNode = NULL;
+    xmlNodePtr node = NULL;
+    xmlSecDSigCtxPtr dsigCtx = NULL;
+    int res = -1;
+    
+
+    VALUE key_file = rb_hash_aref(rb_opts, ID2SYM(rb_intern("key")));
+
+    assert(self);
+    assert(key_file);
+    
+    /* load template */
+
+    Data_Get_Struct(self, xmlNode, envelopeNode);
+    doc = envelopeNode->doc;
+
+    /* doc = xmlParseFile(tmpl_file);
+    if ((doc == NULL) || (xmlDocGetRootElement(doc) == NULL)){
+        fprintf(stderr, "Error: unable to parse file \"%s\"\n", tmpl_file);
+        goto done;      
+    }*/
+    
+    /* find start node */
+    node = xmlSecFindNode(xmlDocGetRootElement(doc), xmlSecNodeSignature, xmlSecDSigNs);
+    if(node == NULL) {
+        fprintf(stderr, "Error: start node not found.\n");
+        goto done;      
+    }
+
+    /* create signature context, we don't need keys manager in this example */
+    dsigCtx = xmlSecDSigCtxCreate(NULL);
+    if(dsigCtx == NULL) {
+        fprintf(stderr,"Error: failed to create signature context\n");
+        goto done;
+    }
+
+    /* load private key, assuming that there is not password */
+    dsigCtx->signKey = xmlSecCryptoAppKeyLoad(key_file, xmlSecKeyDataFormatPem, NULL, NULL, NULL);
+    if(dsigCtx->signKey == NULL) {
+        fprintf(stderr,"Error: failed to load private pem key from \"%s\"\n", key_file);
+        goto done;
+    }
+
+    /* set key name to the file name, this is just an example! */
+    if(xmlSecKeySetName(dsigCtx->signKey, key_file) < 0) {
+        fprintf(stderr,"Error: failed to set key name for key from \"%s\"\n", key_file);
+        goto done;
+    }
+
+    /* sign the template */
+    if(xmlSecDSigCtxSign(dsigCtx, node) < 0) {
+        fprintf(stderr,"Error: signature failed\n");
+        goto done;
+    }
+        
+    /* print signed document to stdout */
+    xmlDocDump(stdout, doc);
+    
+    /* success */
+    res = 0;
+
+done:    
+    /* cleanup */
+    if(dsigCtx != NULL) {
+        xmlSecDSigCtxDestroy(dsigCtx);
+    }
+    
+    /* Michael Lee: Don't remove the doc
+    if(doc != NULL) {
+        xmlFreeDoc(doc); 
+    }
+    */
+    return(res);
+}
+

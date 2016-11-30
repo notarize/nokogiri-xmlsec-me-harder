@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'xmlsec/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "nokogiri-xmlsec-me-harder"
+  spec.name          = "nokogiri-xmlsec-notarize"
   spec.version       = Xmlsec::VERSION
   spec.authors       = ["Albert J. Wong"]
   spec.email         = ["awong.dev@gmail.com"]
