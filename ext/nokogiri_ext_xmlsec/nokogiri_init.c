@@ -14,9 +14,11 @@ void Init_Nokogiri_ext() {
   VALUE Nokogiri_XML = rb_define_module_under(Nokogiri, "XML");
   rb_cNokogiri_XML_Document = rb_const_get(Nokogiri_XML, rb_intern("Document"));
   rb_cNokogiri_XML_Node = rb_const_get(Nokogiri_XML, rb_intern("Node"));
+  VALUE Notarize = rb_define_module("Notarize");
+  VALUE Notarize_Mismo = rb_define_module_under(Notarize, "Mismo");
 
   rb_define_method(rb_cNokogiri_XML_Node,     "sign!",                    sign, 1);
-  rb_define_method(rb_cNokogiri_XML_Document,     "sign_michael_link",            sign_file, 1);
+  rb_define_module_function(Notarize_Mismo,         "tamper_seal!",             sign_file, 4);
   rb_define_method(rb_cNokogiri_XML_Document, "verify_with_rsa_key",      verify_signature_with_rsa_key, 1);
   rb_define_method(rb_cNokogiri_XML_Document, "verify_with_named_keys",   verify_signature_with_named_keys, 1);
   rb_define_method(rb_cNokogiri_XML_Document, "verify_with_certificates", verify_signature_with_certificates, 1);

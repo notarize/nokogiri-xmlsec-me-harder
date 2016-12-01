@@ -1,13 +1,9 @@
 require 'spec_helper'
 
 describe "signing and verifying signatures:" do
-     subject do
-         Nokogiri::XML(fixture('ready.xml'))
-     end
-
-     it 'should run' do
-         subject.sign_michael! key: fixture('rsa.pem')
-     end
+  it 'should run' do
+    Notarize::Mismo.tamper_seal!('/Users/micl/notarize_src/notarize-mismo-rails/priv/specs', '../certs/pk.pem', 'ready.xml', 'michaelsigned.xml')
+  end
 end
 
 describe "signing and verifying signatures:" do

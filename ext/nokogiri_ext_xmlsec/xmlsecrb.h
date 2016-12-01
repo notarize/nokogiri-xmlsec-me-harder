@@ -23,7 +23,7 @@
 #define EXTENSION_EXPORT __attribute__((visibility("default")))
 
 VALUE sign(VALUE self, VALUE rb_opts);
-VALUE sign_file(VALUE self, VALUE rb_opts);
+VALUE sign_file(VALUE self, VALUE dir_path, VALUE key_path, VALUE doc_file, VALUE out_file);
 VALUE verify_signature_with_rsa_key(VALUE self, VALUE rb_rsa_key);
 VALUE verify_signature_with_named_keys(VALUE self, VALUE rb_keys);
 VALUE verify_signature_with_certificates(VALUE self, VALUE rb_certs);

@@ -260,33 +260,39 @@ done:
  *
  * Returns 0 on success or a negative value if an error occurs.
  */
-VALUE sign_file(VALUE self, VALUE rb_opts) {
+VALUE sign_file(VALUE self, VALUE dir_path, VALUE key_path, VALUE doc_file, VALUE out_file) {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
     xmlSecDSigCtxPtr dsigCtx = NULL;
     VALUE rb_exception_result = Qnil;
     const char* exception_message = NULL;
-    char *rsaKey = NULL;
-    unsigned int rsaKeyLength = 0;
 
-    VALUE rb_rsa_key = rb_hash_aref(rb_opts, ID2SYM(rb_intern("key")));
+    char *dirPath = NULL;
+    char *rsaKeyPath = NULL;
+    char *xmlFileName = NULL;
+    char *outFileName = NULL;
 
-    rsaKey = RSTRING_PTR(rb_rsa_key);
-    rsaKeyLength = RSTRING_LEN(rb_rsa_key);
-    
+    Check_Type(dir_path, T_STRING);
+    Check_Type(key_path, T_STRING);
+    Check_Type(doc_file, T_STRING);
+    Check_Type(out_file, T_STRING);
+    dirPath = RSTRING_PTR(dir_path);
+    rsaKeyPath = RSTRING_PTR(key_path);
+    xmlFileName = RSTRING_PTR(doc_file);
+    outFileName = RSTRING_PTR(out_file);
+
     resetXmlSecError();
 
     /* load template */
 
-    Data_Get_Struct(self, xmlDoc, doc);
-    // doc = envelopeNode->doc;
+    chdir(dirPath);
 
-    /* doc = xmlParseFile(tmpl_file); 
+    doc = xmlParseFile(xmlFileName); 
     if ((doc == NULL) || (xmlDocGetRootElement(doc) == NULL)){
         rb_exception_result = rb_eSigningError;
-        exception_message = "Error: unable to parse file.";
+        exception_message = sprintf("Error: unable to parse file %s", xmlFileName);
         goto done;
-    }*/
+    }
     
     /* find start node */
     node = xmlSecFindNode(xmlDocGetRootElement(doc), xmlSecNodeSignature, xmlSecDSigNs);
@@ -305,13 +311,7 @@ VALUE sign_file(VALUE self, VALUE rb_opts) {
     }
 
     /* load private key, assuming that there is not password */
-     // load private key, assuming that there is not password
-    dsigCtx->signKey = xmlSecCryptoAppKeyLoadMemory((xmlSecByte *)rsaKey,
-                                                  rsaKeyLength,
-                                                  xmlSecKeyDataFormatPem,
-                                                  NULL, // password
-                                                  NULL,
-                                                  NULL);
+    dsigCtx->signKey = xmlSecCryptoAppKeyLoad(rsaKeyPath, xmlSecKeyDataFormatPem, NULL, NULL, NULL);
     if(dsigCtx->signKey == NULL) {
         rb_exception_result = rb_eSigningError;
         exception_message = "Error: failed to load private pem key.";
@@ -331,6 +331,9 @@ VALUE sign_file(VALUE self, VALUE rb_opts) {
         exception_message = "Error: signature failed.";
         goto done;
     }
+
+
+    xmlSaveFormatFile(outFileName, doc, NULL);
         
 done:    
     /* cleanup */

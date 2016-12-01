@@ -3,15 +3,12 @@ require 'nokogiri'
 require 'nokogiri_ext_xmlsec'
 
 class Nokogiri::XML::Document
+
   def sign! opts
     root.sign! opts
     self
   end
 
-  def sign_michael! opts
-    sign_michael_link opts
-    self
-  end
 
   # Verifies the signature on the current document.
   #
