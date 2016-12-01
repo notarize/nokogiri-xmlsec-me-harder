@@ -1,3 +1,3 @@
 module Xmlsec
-  VERSION = '0.9.33'
+  VERSION = '1.00'
 end
